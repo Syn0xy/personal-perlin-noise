@@ -1,5 +1,5 @@
 [package]
-name = "noise_test"
+name = "perlin_noise"
 version = "0.1.0"
 edition = "2021"
 
