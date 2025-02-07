@@ -1,7 +1,7 @@
 use std::u8;
 
 use image::GrayImage;
-use noise_test::perlin_noise::{self, NoiseDescriptor, NoiseOffset, NormalizeMode};
+use perlin_noise::{NoiseDescriptor, NoiseOffset, NormalizeMode};
 
 fn main() {
     let noise_desc = NoiseDescriptor {
