@@ -1,4 +1,4 @@
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub enum NormalizeMode {
     #[default]
     Global,

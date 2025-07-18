@@ -6,29 +6,30 @@ use crate::{
     NoiseOffset,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct NoiseDescriptor {
     pub seed: u64,
-    pub width: usize,
-    pub height: usize,
     pub scale: f32,
     pub octaves: usize,
     pub persistance: f32,
     pub lacunarity: f32,
+    pub normalize_mode: NormalizeMode,
 }
 
 pub fn generate_map(
-    noise_descriptor: &NoiseDescriptor,
+    map_width: u32,
+    map_height: u32,
+    noise_descriptor: NoiseDescriptor,
     offset: &NoiseOffset,
-    normalize_mode: &NormalizeMode,
 ) -> Vec<f32> {
-    let map_width = noise_descriptor.height;
-    let map_height = noise_descriptor.height;
-    let seed = noise_descriptor.seed;
-    let mut scale = noise_descriptor.scale;
-    let octaves = noise_descriptor.octaves;
-    let persistance = noise_descriptor.persistance;
-    let lacunarity = noise_descriptor.lacunarity;
+    let NoiseDescriptor {
+        seed,
+        mut scale,
+        octaves,
+        persistance,
+        lacunarity,
+        normalize_mode,
+    } = noise_descriptor;
 
     let map_length = map_width * map_height;
     let perlin = Perlin::new(seed as u32);
@@ -40,6 +41,10 @@ pub fn generate_map(
     let mut amplitude: f32 = 1.0;
     let mut frequency: f32;
 
+    if scale <= 0.0 {
+        scale = 0.00001_f32
+    }
+
     for _ in 0..octaves {
         let offset_x: f32 = rng.gen_range(-100_000_f32..100_000_f32) + offset.x;
         let offset_y: f32 = rng.gen_range(-100_000_f32..100_000_f32) - offset.y;
@@ -50,10 +55,6 @@ pub fn generate_map(
 
         max_possible_height += amplitude;
         amplitude *= persistance;
-    }
-
-    if scale <= 0.0 {
-        scale = 0.00001_f32
     }
 
     let mut max_local_noise_height = f32::MIN;
@@ -83,18 +84,15 @@ pub fn generate_map(
             frequency *= lacunarity;
         }
 
-        if noise_height > max_local_noise_height {
-            max_local_noise_height = noise_height;
-        } else if noise_height < min_local_noise_height {
-            min_local_noise_height = noise_height;
-        }
+        max_local_noise_height = max_local_noise_height.max(noise_height);
+        min_local_noise_height = min_local_noise_height.min(noise_height);
 
         noise_map.push(noise_height);
     }
 
     normalize::normalize_map(
         &mut noise_map,
-        map_length,
+        map_length as usize,
         max_possible_height,
         min_local_noise_height,
         max_local_noise_height,
